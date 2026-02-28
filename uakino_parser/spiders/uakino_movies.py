@@ -16,6 +16,5 @@ class UakinoMovies(scrapy.Spider):
             }
 
         next_page = response.css("span.pnext a::attr(href)").get()
-        print(next_page)
         if next_page is not None:
             yield response.follow(next_page, callback=self.parse)
