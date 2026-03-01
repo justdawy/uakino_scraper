@@ -5,7 +5,7 @@ import re
 class UakinoMovies(scrapy.Spider):
     name = "movies"
     allowed_domains = ["uakino.best"]
-    url: str = "https://uakino.best/ua/page/2626/"
+    url: str = "https://uakino.best/ua/"
 
     async def start(self):
         yield scrapy.Request(self.url, self.parse_listpage)
