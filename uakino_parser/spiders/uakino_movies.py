@@ -25,6 +25,7 @@ class UakinoMovies(scrapy.Spider):
         rating_section = response.css("div.main-sliders-rate.ignore-select")
         movie_info = await self.process_movie_info(response.css("div.film-info"))
         movie_right = response.css("div.movie-right")
+        description = movie_right.xpath('string(.//div[@itemprop="description"])').get()
         franchise = movie_right.css("div.mov-dop u::text").get()
         if not franchise:
             franchise = movie_right.css("div.mov-dop a::text").get()
@@ -45,6 +46,7 @@ class UakinoMovies(scrapy.Spider):
             "franchise": franchise,
             "uk_title": response.css("span.solototle::text").get(),
             "en_title": response.css("span.origintitle i::text").get(),
+            "description": description.strip(),
             "poster_url": response.urljoin(
                 response.css("div.film-poster a::attr(href)").get()
             ),
