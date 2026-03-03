@@ -23,10 +23,23 @@ class UakinoMovies(scrapy.Spider):
 
     async def parse_movie(self, response):
         rating_section = response.css("div.main-sliders-rate.ignore-select")
+        meta = response.xpath('//div[@itemscope and contains(@itemtype, "schema.org")]')
+        schema_type = meta.xpath("./@itemtype").get().split("/")[-1]
+        duration = meta.xpath('.//*[@itemprop="duration"]/@content').get()
+        season = meta.xpath('.//*[@itemprop="season"]/@content').get()
+        episode = meta.xpath('.//*[@itemprop="episode"]/@content').get()
+        trailer_url = meta.xpath('.//*[@itemprop="trailer"]/@value').get()
+        directors = [
+            d.strip()
+            for value in response.xpath('//*[@itemprop="director"]/@content').getall()
+            for d in value.split(",")
+            if d.strip()
+        ]
         movie_info = await self.process_movie_info(response.css("div.film-info"))
         movie_right = response.css("div.movie-right")
         description = movie_right.xpath('string(.//div[@itemprop="description"])').get()
         franchise = movie_right.css("div.mov-dop u::text").get()
+        screenshots = movie_right.css("div.screens-section a::attr(href)").getall()
         if not franchise:
             franchise = movie_right.css("div.mov-dop a::text").get()
             if not franchise:
@@ -41,19 +54,28 @@ class UakinoMovies(scrapy.Spider):
         if franchise and "ще серіали і кінофільми українською" in franchise:
             franchise = None
 
-        yield {
+        item = {
             "url": response.url,
+            "schema_type": schema_type,
+            "season": season,
+            "episode": episode,
             "franchise": franchise,
             "uk_title": response.css("span.solototle::text").get(),
             "en_title": response.css("span.origintitle i::text").get(),
+            "duration": duration,
             "description": description.strip(),
             "poster_url": response.urljoin(
                 response.css("div.film-poster a::attr(href)").get()
             ),
+            "trailer_url": trailer_url,
+            "screenshots": screenshots,
             "likes": rating_section.css("a span span::text").get(),
             "dislikes": rating_section.css("a")[-1].css("span span::text").get(),
             **movie_info,
+            "directors": directors,
         }
+
+        yield item
 
     async def process_movie_info(self, info_section):
         result = {}
