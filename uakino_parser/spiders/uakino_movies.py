@@ -40,6 +40,9 @@ class UakinoMovies(scrapy.Spider):
         description = movie_right.xpath('string(.//div[@itemprop="description"])').get()
         franchise = movie_right.css("div.mov-dop u::text").get()
         screenshots = movie_right.css("div.screens-section a::attr(href)").getall()
+        collections = [
+            c.strip() for c in movie_right.css("a.colection-n-link::text").getall()
+        ]
         if not franchise:
             franchise = movie_right.css("div.mov-dop a::text").get()
             if not franchise:
@@ -73,6 +76,7 @@ class UakinoMovies(scrapy.Spider):
             "dislikes": rating_section.css("a")[-1].css("span span::text").get(),
             **movie_info,
             "directors": directors,
+            "collections": collections,
         }
 
         yield item
@@ -135,6 +139,6 @@ class UakinoMovies(scrapy.Spider):
                 if rating_text and "/" in rating_text:
                     rating, votes = rating_text.split("/")
                     result["imdb_rating"] = float(rating)
-                    result["imdb_votes"] = int(votes)
+                    result["imdb_votes"] = int(votes.replace(" ", ""))
 
         return result
