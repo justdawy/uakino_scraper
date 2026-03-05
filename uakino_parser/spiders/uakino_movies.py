@@ -22,6 +22,7 @@ class UakinoMovies(scrapy.Spider):
             yield response.follow(next_page_url, callback=self.parse_listpage)
 
     async def parse_movie(self, response):
+        movie_id = response.url.split("/")[-1].split("-")[0]
         rating_section = response.css("div.main-sliders-rate.ignore-select")
         meta = response.xpath('//div[@itemscope and contains(@itemtype, "schema.org")]')
         schema_type = meta.xpath("./@itemtype").get().split("/")[-1]
@@ -58,6 +59,7 @@ class UakinoMovies(scrapy.Spider):
             franchise = None
 
         item = {
+            "id": movie_id,
             "url": response.url,
             "schema_type": schema_type,
             "season": season,
