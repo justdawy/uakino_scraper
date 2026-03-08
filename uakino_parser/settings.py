@@ -22,9 +22,16 @@ ADDONS = {}
 ROBOTSTXT_OBEY = False
 
 # Concurrency and throttling settings
-# CONCURRENT_REQUESTS = 16
+CONCURRENT_REQUESTS = 32
 CONCURRENT_REQUESTS_PER_DOMAIN = 1
 DOWNLOAD_DELAY = 1
+DOWNLOAD_SLOTS = {
+    "ashdi.vip": {
+        "concurrency": 16,
+        "delay": 0,
+        "randomize_delay": False,
+    }
+}
 
 # Disable cookies (enabled by default)
 # COOKIES_ENABLED = False
