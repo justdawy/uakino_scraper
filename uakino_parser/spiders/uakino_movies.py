@@ -202,13 +202,13 @@ class UakinoMovies(scrapy.Spider):
                 result["age_rating"] = text_values[0] if text_values else None
 
             elif "країна" in label:
-                result["country"] = link_values[0] if link_values else None
+                result["country"] = link_values
 
             elif "жанр" in label:
                 result["genres"] = link_values
 
             elif "режисер" in label:
-                result["director"] = link_values[0] if link_values else None
+                result["director"] = link_values
 
             elif "актори" in label:
                 result["actors"] = link_values
