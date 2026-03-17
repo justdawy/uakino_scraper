@@ -1,7 +1,9 @@
-import scrapy
 import re
 from datetime import datetime
+
+import scrapy
 from parsel import Selector
+
 
 class UakinoMovies(scrapy.Spider):
     name = "movies"
@@ -13,7 +15,8 @@ class UakinoMovies(scrapy.Spider):
 
     async def parse_listpage(self, response):
         movie_urls = response.css(
-            "div.main-section-wr.with-sidebar.coloredgray.clearfix a.movie-title::attr(href)"
+            "div.main-section-wr.with-sidebar.coloredgray.clearfix "
+            "a.movie-title::attr(href)"
         ).getall()
         for url in movie_urls:
             yield response.follow(url, callback=self.parse_movie)
@@ -41,7 +44,10 @@ class UakinoMovies(scrapy.Spider):
         movie_right = response.css("div.movie-right")
         description = movie_right.xpath('string(.//div[@itemprop="description"])').get()
         franchise = movie_right.css("div.mov-dop u::text").get()
-        screenshots = [response.urljoin(s) for s in movie_right.css("div.screens-section a::attr(href)").getall()]
+        screenshots = [
+            response.urljoin(s)
+            for s in movie_right.css("div.screens-section a::attr(href)").getall()
+        ]
         collections = [
             c.strip() for c in movie_right.css("a.colection-n-link::text").getall()
         ]
@@ -91,7 +97,7 @@ class UakinoMovies(scrapy.Spider):
             ajax_url,
             meta={"movie": item},
             callback=self.parse_ajax,
-            headers={"X-Requested-With": "XMLHttpRequest"}
+            headers={"X-Requested-With": "XMLHttpRequest"},
         )
 
     async def parse_ajax(self, response):
@@ -101,11 +107,13 @@ class UakinoMovies(scrapy.Spider):
         streams = []
 
         if movie.get("stream"):
-            streams.append({
-                "title": None,
-                "voice": None,
-                "player_url": self.normalize_url(movie["stream"])
-            })
+            streams.append(
+                {
+                    "title": None,
+                    "voice": None,
+                    "player_url": self.normalize_url(movie["stream"]),
+                }
+            )
             del movie["stream"]
         elif playlist_html:
             sel = Selector(text=playlist_html)
@@ -114,28 +122,23 @@ class UakinoMovies(scrapy.Spider):
                 data_file = ep.attrib.get("data-file")
                 if not data_file:
                     continue
-                streams.append({
-                    "title": ep.css("::text").get(default="").strip(),
-                    "voice": ep.attrib.get("data-voice"),
-                    "player_url": self.normalize_url(data_file)
-                })
+                streams.append(
+                    {
+                        "title": ep.css("::text").get(default="").strip(),
+                        "voice": ep.attrib.get("data-voice"),
+                        "player_url": self.normalize_url(data_file),
+                    }
+                )
         if not streams:
-            yield {
-                **movie, 
-                "streams": []
-            }
+            yield {**movie, "streams": []}
             return
         movie["_pending_streams"] = len(streams)
         for stream in streams:
             yield response.follow(
                 stream["player_url"],
                 callback=self.parse_stream,
-                meta={
-                    "movie": movie,
-                    "stream": stream,
-                    "all_streams": streams
-                }
-            ) 
+                meta={"movie": movie, "stream": stream, "all_streams": streams},
+            )
 
     def normalize_url(self, url):
         if not url:
@@ -157,17 +160,11 @@ class UakinoMovies(scrapy.Spider):
         stream["poster_url"] = poster_match.group(1) if poster_match else None
         stream["subtitle"] = subtitle_match.group(1) if subtitle_match else None
 
-
-        
         movie["_pending_streams"] -= 1
         if movie["_pending_streams"] == 0:
             # remove helper key
             del movie["_pending_streams"]
-            yield {
-                **movie, 
-                "streams": all_streams
-            }
-
+            yield {**movie, "streams": all_streams}
 
     async def process_movie_info(self, info_section):
         result = {}
