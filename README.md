@@ -1,5 +1,3 @@
-<img src="https://uakino.best/templates/uakino/images/logo.png?v3"  alt="uakino logo">
-
 # uakino_parser
 
 A Scrapy-based web scraper for extracting movie and TV series data from [uakino.best](https://uakino.best).
